@@ -340,7 +340,7 @@ async def fetch_batches(app, message, org_name, session_data, scraper):
                     "🔄 <b>Processing Course</b>\n"
                     f"└─ Current: <code>{selected_course_name}</code>"
                 )
-                await extract_batch(app, message, org_name, selected_course_id)
+                await extract_batch(app, message, org_name, selected_course_id, session_data)
             else:
                 await app.send_message(
                     message.chat.id,
@@ -362,7 +362,7 @@ async def fetch_batches(app, message, org_name, session_data, scraper):
         )
 
 
-async def extract_batch(app, message, org_name, batch_id):
+async def extract_batch(app, message, org_name, batch_id, session_data):
     
     if "token" in session_data:
         batch_name = session_data["courses"][batch_id]
