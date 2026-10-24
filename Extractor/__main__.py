@@ -10,19 +10,28 @@ async def sumit_boot():
         importlib.import_module("Extractor.modules." + all_module)
 
     print("» ʙᴏᴛ ᴅᴇᴘʟᴏʏ sᴜᴄᴄᴇssғᴜʟʟʏ ✨ 🎉")
-    # Pyrogram's idle() manages the process signal handlers and exits on
-    # SIGINT/SIGTERM. Avoid replacing those handlers with asyncio.Event.set,
-    # which is synchronous and cannot be passed to loop.create_task().
+    # Pyrogram idle() installs and handles the process signal handlers.
     await idle()
     print("» ɢᴏᴏᴅ ʙʏᴇ ! sᴛᴏᴘᴘɪɴɢ ʙᴏᴛ.")
 
 
 def main():
+    # Extractor.app is initialized during package import and uses this event
+    # loop. Reuse it instead of asyncio.run(), which would create a second loop.
+    loop = asyncio.get_event_loop()
     try:
-        asyncio.run(sumit_boot())
+        loop.run_until_complete(sumit_boot())
     except KeyboardInterrupt:
         print("Interrupted by user.")
     finally:
+        pending = asyncio.all_tasks(loop)
+        for task in pending:
+            task.cancel()
+        if pending:
+            loop.run_until_complete(
+                asyncio.gather(*pending, return_exceptions=True)
+            )
+        loop.close()
         print("Bot stopped.")
 
 
