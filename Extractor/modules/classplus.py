@@ -24,10 +24,11 @@ time_new = current_time.strftime("%d-%m-%Y %I:%M %p")
 
 
 apiurl = "https://api.classplusapp.com"
-s = cloudscraper.create_scraper() 
 
 @app.on_message(filters.command(["cp"]))
 async def classplus_txt(app, message):
+    # Keep cookies and request state isolated between concurrent users.
+    scraper = cloudscraper.create_scraper()
     # Step 1: Ask for details
     details = await app.ask(message.chat.id, 
         "🔹 <b>CP EXTRACTOR</b> 🔹\n\n"
@@ -55,7 +56,7 @@ async def classplus_txt(app, message):
             }
             
             # Step 2: Fetch Organization Details
-            org_response = (await asyncio.to_thread(s.get, f"{apiurl}/v2/orgs/{org_code}", headers=headers, timeout=20)).json()
+            org_response = (await asyncio.to_thread(scraper.get, f"{apiurl}/v2/orgs/{org_code}", headers=headers, timeout=20)).json()
             org_id = org_response["data"]["orgId"]
             org_name = org_response["data"]["orgName"]
 
@@ -69,7 +70,7 @@ async def classplus_txt(app, message):
                 'otpCount': 0
             }
              
-            otp_response = await asyncio.to_thread(s.post, f"{apiurl}/v2/otp/generate", json=otp_payload, headers=headers, timeout=20)
+            otp_response = await asyncio.to_thread(scraper.post, f"{apiurl}/v2/otp/generate", json=otp_payload, headers=headers, timeout=20)
 
             if otp_response.status_code == 200:
                 otp_data = otp_response.json()
@@ -97,7 +98,7 @@ async def classplus_txt(app, message):
                         "mobile": mobile
                     }
                     
-                    verify_response = await asyncio.to_thread(s.post, f"{apiurl}/v2/users/verify", json=verify_payload, headers=headers, timeout=20)
+                    verify_response = await asyncio.to_thread(scraper.post, f"{apiurl}/v2/users/verify", json=verify_payload, headers=headers, timeout=20)
                     
 
                     if verify_response.status_code == 200:
@@ -121,11 +122,11 @@ async def classplus_txt(app, message):
                                  'api-version': '29',
                                  'device-id': '39F093FF35F201D9'
                              }
-                            response = await asyncio.to_thread(s.get, f"{apiurl}/v2/courses?tabCategoryId=1", headers=headers, timeout=20)  # Corrected indentation here
+                            response = await asyncio.to_thread(scraper.get, f"{apiurl}/v2/courses?tabCategoryId=1", headers=headers, timeout=20)  # Corrected indentation here
                             if response.status_code == 200:
                                 courses = response.json()["data"]["courses"]
                                 session_data = {"token": token, "courses": {course["id"]: course["name"] for course in courses}}
-                                await fetch_batches(app, message, org_name, session_data)
+                                await fetch_batches(app, message, org_name, session_data, scraper)
                             else:
                                 await message.reply("NO BATCH FOUND ")
 
@@ -149,7 +150,7 @@ async def classplus_txt(app, message):
                             "viaSms": 1
                         }
     
-                        abcdefg_response = await asyncio.to_thread(s.post, "https://api.classplusapp.com/v2/users/register", json=abcdefg_payload, headers=headers, timeout=20)
+                        abcdefg_response = await asyncio.to_thread(scraper.post, "https://api.classplusapp.com/v2/users/register", json=abcdefg_payload, headers=headers, timeout=20)
                         
 
                         if abcdefg_response.status_code == 200:
@@ -179,7 +180,7 @@ async def classplus_txt(app, message):
                             "viaSms": 1
                         }
     
-                        abcdefg_response = await asyncio.to_thread(s.post, "https://api.classplusapp.com/v2/users/register", json=abcdefg_payload, headers=headers, timeout=20)
+                        abcdefg_response = await asyncio.to_thread(scraper.post, "https://api.classplusapp.com/v2/users/register", json=abcdefg_payload, headers=headers, timeout=20)
                         
                         
 
@@ -198,11 +199,11 @@ async def classplus_txt(app, message):
                                  'api-version': '29',
                                  'device-id': '39F093FF35F201D9'
                              }
-                            response = await asyncio.to_thread(s.get, f"{apiurl}/v2/courses?tabCategoryId=1", headers=headers, timeout=20)  # Corrected indentation here
+                            response = await asyncio.to_thread(scraper.get, f"{apiurl}/v2/courses?tabCategoryId=1", headers=headers, timeout=20)  # Corrected indentation here
                             if response.status_code == 200:
                                 courses = response.json()["data"]["courses"]
                                 session_data = {"token": token, "courses": {course["id"]: course["name"] for course in courses}}
-                                await fetch_batches(app, message, org_name, session_data)
+                                await fetch_batches(app, message, org_name, session_data, scraper)
                             
                             else:
                                 await message.reply("Failed to verify OTP. Please try again.")
@@ -227,7 +228,7 @@ async def classplus_txt(app, message):
                             "viaSms": 1
                         }
     
-                        abcdefg_response = await asyncio.to_thread(s.post, "https://api.classplusapp.com/v2/users/register", json=abcdefg_payload, headers=headers, timeout=20)
+                        abcdefg_response = await asyncio.to_thread(scraper.post, "https://api.classplusapp.com/v2/users/register", json=abcdefg_payload, headers=headers, timeout=20)
                         
                         
 
@@ -246,11 +247,11 @@ async def classplus_txt(app, message):
                                  'api-version': '29',
                                  'device-id': '39F093FF35F201D9'
                              }
-                            response = await asyncio.to_thread(s.get, f"{apiurl}/v2/courses?tabCategoryId=1", headers=headers, timeout=20)  # Corrected indentation here
+                            response = await asyncio.to_thread(scraper.get, f"{apiurl}/v2/courses?tabCategoryId=1", headers=headers, timeout=20)  # Corrected indentation here
                             if response.status_code == 200:
                                 courses = response.json()["data"]["courses"]
                                 session_data = {"token": token, "courses": {course["id"]: course["name"] for course in courses}}
-                                await fetch_batches(app, message, org_name, session_data)
+                                await fetch_batches(app, message, org_name, session_data, scraper)
                             else:
                                 await message.reply("NO BATCH FOUND ")
                         else:
@@ -270,7 +271,7 @@ async def classplus_txt(app, message):
             'api-version': '29',
             'device-id': '39F093FF35F201D9'
         }
-        response = await asyncio.to_thread(s.get, f"{apiurl}/v2/courses?tabCategoryId=1", headers=headers, timeout=20)
+        response = await asyncio.to_thread(scraper.get, f"{apiurl}/v2/courses?tabCategoryId=1", headers=headers, timeout=20)
         if response.status_code == 200:
             courses = response.json()["data"]["courses"]
     
@@ -287,7 +288,7 @@ async def classplus_txt(app, message):
                 if "courses.store" in shareable_link:
   
                     new_data = shareable_link.split('.')[0].split('//')[-1]
-                    org_response = await asyncio.to_thread(s.get, f"https://api.classplusapp.com/v2/orgs/{new_data}", headers=headers, timeout=20)
+                    org_response = await asyncio.to_thread(scraper.get, f"https://api.classplusapp.com/v2/orgs/{new_data}", headers=headers, timeout=20)
         
                     if org_response.status_code == 200:
                         org_data = org_response.json().get("data", {})
@@ -298,7 +299,7 @@ async def classplus_txt(app, message):
 
                 # Avoid logging account-derived organization details.
 
-            await fetch_batches(app, message, org_name, session_data)
+            await fetch_batches(app, message, org_name, session_data, scraper)
         else:
             await message.reply("Invalid token. Please try again.")
     else:
@@ -306,7 +307,7 @@ async def classplus_txt(app, message):
 
 
 
-async def fetch_batches(app, message, org_name, session_data):
+async def fetch_batches(app, message, org_name, session_data, scraper):
     
     if "courses" in session_data:
         courses = session_data["courses"]
