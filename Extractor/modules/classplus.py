@@ -55,7 +55,7 @@ async def classplus_txt(app, message):
             }
             
             # Step 2: Fetch Organization Details
-            org_response = s.get(f"{apiurl}/v2/orgs/{org_code}", headers=headers).json()
+            org_response = s.get(f"{apiurl}/v2/orgs/{org_code}", headers=headers, timeout=20).json()
             org_id = org_response["data"]["orgId"]
             org_name = org_response["data"]["orgName"]
 
@@ -69,7 +69,7 @@ async def classplus_txt(app, message):
                 'otpCount': 0
             }
              
-            otp_response = s.post(f"{apiurl}/v2/otp/generate", json=otp_payload, headers=headers)
+            otp_response = s.post(f"{apiurl}/v2/otp/generate", json=otp_payload, headers=headers, timeout=20)
 
             if otp_response.status_code == 200:
                 otp_data = otp_response.json()
@@ -97,7 +97,7 @@ async def classplus_txt(app, message):
                         "mobile": mobile
                     }
                     
-                    verify_response = s.post(f"{apiurl}/v2/users/verify", json=verify_payload, headers=headers)
+                    verify_response = s.post(f"{apiurl}/v2/users/verify", json=verify_payload, headers=headers, timeout=20)
                     
 
                     if verify_response.status_code == 200:
@@ -122,7 +122,7 @@ async def classplus_txt(app, message):
                                  'api-version': '29',
                                  'device-id': '39F093FF35F201D9'
                              }
-                            response = s.get(f"{apiurl}/v2/courses?tabCategoryId=1", headers=headers)  # Corrected indentation here
+                            response = s.get(f"{apiurl}/v2/courses?tabCategoryId=1", headers=headers, timeout=20)  # Corrected indentation here
                             if response.status_code == 200:
                                 courses = response.json()["data"]["courses"]
                                 s.session_data = {"token": token, "courses": {course["id"]: course["name"] for course in courses}}
@@ -150,7 +150,7 @@ async def classplus_txt(app, message):
                             "viaSms": 1
                         }
     
-                        abcdefg_response = s.post("https://api.classplusapp.com/v2/users/register", json=abcdefg_payload, headers=headers)
+                        abcdefg_response = s.post("https://api.classplusapp.com/v2/users/register", json=abcdefg_payload, headers=headers, timeout=20)
                         
 
                         if abcdefg_response.status_code == 200:
@@ -181,7 +181,7 @@ async def classplus_txt(app, message):
                             "viaSms": 1
                         }
     
-                        abcdefg_response = s.post("https://api.classplusapp.com/v2/users/register", json=abcdefg_payload, headers=headers)
+                        abcdefg_response = s.post("https://api.classplusapp.com/v2/users/register", json=abcdefg_payload, headers=headers, timeout=20)
                         
                         
 
@@ -201,7 +201,7 @@ async def classplus_txt(app, message):
                                  'api-version': '29',
                                  'device-id': '39F093FF35F201D9'
                              }
-                            response = s.get(f"{apiurl}/v2/courses?tabCategoryId=1", headers=headers)  # Corrected indentation here
+                            response = s.get(f"{apiurl}/v2/courses?tabCategoryId=1", headers=headers, timeout=20)  # Corrected indentation here
                             if response.status_code == 200:
                                 courses = response.json()["data"]["courses"]
                                 s.session_data = {"token": token, "courses": {course["id"]: course["name"] for course in courses}}
@@ -230,7 +230,7 @@ async def classplus_txt(app, message):
                             "viaSms": 1
                         }
     
-                        abcdefg_response = s.post("https://api.classplusapp.com/v2/users/register", json=abcdefg_payload, headers=headers)
+                        abcdefg_response = s.post("https://api.classplusapp.com/v2/users/register", json=abcdefg_payload, headers=headers, timeout=20)
                         
                         
 
@@ -250,7 +250,7 @@ async def classplus_txt(app, message):
                                  'api-version': '29',
                                  'device-id': '39F093FF35F201D9'
                              }
-                            response = s.get(f"{apiurl}/v2/courses?tabCategoryId=1", headers=headers)  # Corrected indentation here
+                            response = s.get(f"{apiurl}/v2/courses?tabCategoryId=1", headers=headers, timeout=20)  # Corrected indentation here
                             if response.status_code == 200:
                                 courses = response.json()["data"]["courses"]
                                 s.session_data = {"token": token, "courses": {course["id"]: course["name"] for course in courses}}
@@ -274,7 +274,7 @@ async def classplus_txt(app, message):
             'api-version': '29',
             'device-id': '39F093FF35F201D9'
         }
-        response = s.get(f"{apiurl}/v2/courses?tabCategoryId=1", headers=headers)
+        response = s.get(f"{apiurl}/v2/courses?tabCategoryId=1", headers=headers, timeout=20)
         if response.status_code == 200:
             courses = response.json()["data"]["courses"]
     
@@ -291,7 +291,7 @@ async def classplus_txt(app, message):
                 if "courses.store" in shareable_link:
   
                     new_data = shareable_link.split('.')[0].split('//')[-1]
-                    org_response = s.get(f"https://api.classplusapp.com/v2/orgs/{new_data}", headers=headers)
+                    org_response = s.get(f"https://api.classplusapp.com/v2/orgs/{new_data}", headers=headers, timeout=20)
         
                     if org_response.status_code == 200:
                         org_data = org_response.json().get("data", {})
@@ -390,7 +390,7 @@ async def extract_batch(app, message, org_name, batch_id):
         async def fetch_live_videos(course_id):
             """Fetch live videos from the API with contentHashId."""
             outputs = []
-            async with aiohttp.ClientSession() as session:
+            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30, connect=10)) as session:
                 try:
                     url = f"{apiurl}/v2/course/live/list/videos?type=2&entityId={course_id}&limit=9999&offset=0"
                     async with session.get(url, headers=headers) as response:
@@ -419,7 +419,7 @@ async def extract_batch(app, message, org_name, batch_id):
             result = []
             url = f'{apiurl}/v2/course/content/get?courseId={course_id}&folderId={folder_id}'
 
-            async with aiohttp.ClientSession() as session:
+            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30, connect=10)) as session:
                 async with session.get(url, headers=headers) as resp:
                     course_data = await resp.json()
                     course_data = course_data["data"]["courseContent"]
