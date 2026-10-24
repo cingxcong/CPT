@@ -5,6 +5,7 @@ import uuid
 import time
 import asyncio
 import io
+import tempfile
 import aiohttp
 from pyrogram import Client, filters
 import os
@@ -403,8 +404,9 @@ async def extract_batch(app, message, org_name, batch_id, session_data):
                                     decoded_url = encode_partial_url(video_url)
                                     # Clean URL without hash appended
                                     outputs.append(f"🎬 {name}: {decoded_url}\n")
-                except Exception as e:
-                    print(f"Error fetching live videos: {e}")
+                except Exception:
+                    # Avoid leaking request URLs or response details into process logs.
+                    pass
 
             return outputs
 
@@ -473,15 +475,18 @@ async def extract_batch(app, message, org_name, batch_id, session_data):
 
         
         async def write_to_file(extracted_data):
-            """Write data to a text file asynchronously."""
-            invalid_chars = '\t:/+#|@*.'
-            clean_name = ''.join(char for char in batch_name if char not in invalid_chars)
-            clean_name = clean_name.replace('_', ' ')
-            file_path = f"{clean_name}.txt"
-            
-            with open(file_path, "w", encoding='utf-8') as file:
-                file.write(''.join(extracted_data))  
-            return file_path
+            """Write extracted data to a unique temporary file."""
+            # Unique paths prevent concurrent extractions with identical batch names
+            # from overwriting one another.
+            with tempfile.NamedTemporaryFile(
+                mode="w",
+                encoding="utf-8",
+                suffix=".txt",
+                prefix="classplus_",
+                delete=False,
+            ) as file:
+                file.write("".join(extracted_data))
+                return file.name
 
         extracted_data, live_videos = await asyncio.gather(
             process_course_contents(batch_id),
@@ -516,10 +521,14 @@ async def extract_batch(app, message, org_name, batch_id, session_data):
             f"<code>╾───• {BOT_TEXT} •───╼</code>"
         )
 
-        await app.send_document(message.chat.id, file_path, caption=caption)
-        await app.send_document(PREMIUM_LOGS, file_path, caption=caption)
-
-        os.remove(file_path)
+        try:
+            await app.send_document(message.chat.id, file_path, caption=caption)
+            await app.send_document(PREMIUM_LOGS, file_path, caption=caption)
+        finally:
+            try:
+                os.remove(file_path)
+            except FileNotFoundError:
+                pass
             
 
     
